@@ -1,0 +1,36 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    restart: always
+    volumes:
+      - backend_data:/app
+    environment:
+      - NODE_ENV=production
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: always
+
+  caddy:
+    image: caddy:latest
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  caddy_data:
+  caddy_config:
+  backend_data:

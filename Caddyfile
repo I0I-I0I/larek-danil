@@ -1,0 +1,7 @@
+{$DOMAIN:localhost} {
+    # Reverse proxy for API (keep /api prefix)
+    reverse_proxy /api/* backend:3000
+
+    # Everything else goes to the frontend
+    reverse_proxy * frontend:80
+}
