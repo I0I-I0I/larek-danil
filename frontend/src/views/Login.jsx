@@ -18,10 +18,10 @@ const Login = () => {
     return errors;
   };
 
-  const handleLogin = (values) => {
-    setServerError('');
+  const handleLogin = async (values) => {
+    setServerError("");
     try {
-      login(values.emailOrUsername, values.password);
+      await login(values.emailOrUsername, values.password);
     } catch (err) {
       setServerError(err.message);
     }

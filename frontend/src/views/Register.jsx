@@ -26,12 +26,12 @@ const Register = () => {
     return errors;
   };
 
-  const handleRegister = (values) => {
+  const handleRegister = async (values) => {
     setServerError('');
     try {
       const userData = { ...values };
       delete userData.confirmPassword;
-      register(userData);
+      await register(userData);
     } catch (err) {
       setServerError(err.message);
     }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useStore } from "../context/StoreContext";
-import { mockDb } from "../api/mockDb";
+import { api } from "../api/api";
 import { Package, Clock, MapPin } from "lucide-react";
 
 const Orders = () => {
@@ -8,10 +8,14 @@ const Orders = () => {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    const fetchOrders = () => {
+    const fetchOrders = async () => {
       if (user) {
-        const data = mockDb.getOrders(user.id);
-        setOrders(data);
+        try {
+          const data = await api.getOrders();
+          setOrders(data);
+        } catch (err) {
+          console.error("Failed to fetch orders:", err);
+        }
       }
     };
     fetchOrders();

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../context/StoreContext";
-import { mockDb } from "../api/mockDb";
+import { api } from "../api/api";
 import { CheckCircle, ArrowLeft } from "lucide-react";
 import { useFormValidation } from "../hooks/useFormValidation";
 import { validatePhone, validateMinLength } from "../utils/validation";
@@ -22,17 +22,14 @@ const Checkout = () => {
     return errors;
   };
 
-  const handleCreateOrder = (values) => {
+  const handleCreateOrder = async (values) => {
     setServerError("");
     try {
-      const newOrder = mockDb.createOrder({
-        userId: user.id,
-        userName: user.username,
+      const newOrder = await api.createOrder({
         items: cart,
         total: cartTotal,
         address: values.address,
         phone: values.phone,
-        status: "Принят",
       });
       setOrderId(newOrder.id);
       clearCart();

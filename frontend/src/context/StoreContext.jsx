@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { mockDb } from "../api/mockDb";
+import { api } from "../api/api";
 
 const StoreContext = createContext();
 
@@ -11,7 +11,19 @@ export const StoreProvider = ({ children }) => {
     JSON.parse(localStorage.getItem("larek_cart")) || [],
   );
   const [view, setView] = useState("home"); // 'home', 'catalog', 'login', 'register', 'cart', 'checkout', 'orders'
-  const [products] = useState(mockDb.getProducts());
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await api.getProducts();
+        setProducts(data);
+      } catch (err) {
+        console.error("Failed to fetch products:", err);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("larek_user", JSON.stringify(user));
@@ -21,23 +33,26 @@ export const StoreProvider = ({ children }) => {
     localStorage.setItem("larek_cart", JSON.stringify(cart));
   }, [cart]);
 
-  const login = (emailOrUsername, password) => {
-    const loggedInUser = mockDb.login(emailOrUsername, password);
-    setUser(loggedInUser);
+  const login = async (emailOrUsername, password) => {
+    const data = await api.login(emailOrUsername, password);
+    localStorage.setItem("larek_token", data.token);
+    setUser(data.user);
     setView("home");
-    return loggedInUser;
+    return data.user;
   };
 
   const logout = () => {
+    localStorage.removeItem("larek_token");
     setUser(null);
     setView("home");
   };
 
-  const register = (userData) => {
-    const newUser = mockDb.register(userData);
-    setUser(newUser);
+  const register = async (userData) => {
+    const data = await api.register(userData);
+    localStorage.setItem("larek_token", data.token);
+    setUser(data.user);
     setView("home");
-    return newUser;
+    return data.user;
   };
 
   const addToCart = (product) => {
