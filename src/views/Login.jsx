@@ -1,29 +1,53 @@
 import { useState } from 'react';
 import { useStore } from '../context/StoreContext';
+import { useFormValidation } from '../hooks/useFormValidation';
+import { validateRequired } from '../utils/validation';
 
 const Login = () => {
   const { login, navigate } = useStore();
-  const [formData, setFormData] = useState({ emailOrUsername: '', password: '' });
-  const [error, setError] = useState('');
+  const [serverError, setServerError] = useState('');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setError('');
+  const validate = (values) => {
+    const errors = {};
+    const emailOrUsernameError = validateRequired(values.emailOrUsername, 'Email или Логин');
+    if (emailOrUsernameError) errors.emailOrUsername = emailOrUsernameError;
+
+    const passwordError = validateRequired(values.password, 'Пароль');
+    if (passwordError) errors.password = passwordError;
+
+    return errors;
+  };
+
+  const handleLogin = (values) => {
+    setServerError('');
     try {
-      login(formData.emailOrUsername, formData.password);
+      login(values.emailOrUsername, values.password);
     } catch (err) {
-      setError(err.message);
+      setServerError(err.message);
     }
   };
+
+  const {
+    values,
+    errors,
+    touched,
+    handleChange,
+    handleBlur,
+    handleSubmit
+  } = useFormValidation(
+    { emailOrUsername: '', password: '' },
+    validate,
+    handleLogin
+  );
 
   return (
     <div style={{ maxWidth: '400px', margin: '4rem auto' }}>
       <div className="card">
         <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Вход в систему</h2>
         
-        {error && (
+        {serverError && (
           <div style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '0.8rem', borderRadius: 'var(--radius)', marginBottom: '1rem', fontSize: '0.9rem' }}>
-            {error}
+            {serverError}
           </div>
         )}
 
@@ -31,22 +55,28 @@ const Login = () => {
           <div>
             <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>Email или Логин</label>
             <input 
+              name="emailOrUsername"
               type="text" 
-              className="input" 
+              className={`input ${touched.emailOrUsername && errors.emailOrUsername ? 'input-error' : ''}`}
               required 
-              value={formData.emailOrUsername}
-              onChange={e => setFormData({ ...formData, emailOrUsername: e.target.value })}
+              value={values.emailOrUsername}
+              onChange={handleChange}
+              onBlur={handleBlur}
             />
+            {touched.emailOrUsername && errors.emailOrUsername && <span className="error-text">{errors.emailOrUsername}</span>}
           </div>
           <div>
             <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>Пароль</label>
             <input 
+              name="password"
               type="password" 
-              className="input" 
+              className={`input ${touched.password && errors.password ? 'input-error' : ''}`}
               required 
-              value={formData.password}
-              onChange={e => setFormData({ ...formData, password: e.target.value })}
+              value={values.password}
+              onChange={handleChange}
+              onBlur={handleBlur}
             />
+            {touched.password && errors.password && <span className="error-text">{errors.password}</span>}
           </div>
           <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>Войти</button>
         </form>

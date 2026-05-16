@@ -2,26 +2,57 @@ import { useState } from "react";
 import { useStore } from "../context/StoreContext";
 import { mockDb } from "../api/mockDb";
 import { CheckCircle, ArrowLeft } from "lucide-react";
+import { useFormValidation } from "../hooks/useFormValidation";
+import { validatePhone, validateMinLength } from "../utils/validation";
 
 const Checkout = () => {
   const { user, cart, cartTotal, clearCart, navigate } = useStore();
-  const [formData, setFormData] = useState({ address: "", phone: "" });
   const [orderId, setOrderId] = useState(null);
+  const [serverError, setServerError] = useState("");
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newOrder = mockDb.createOrder({
-      userId: user.id,
-      userName: user.username,
-      items: cart,
-      total: cartTotal,
-      address: formData.address,
-      phone: formData.phone,
-      status: "Принят",
-    });
-    setOrderId(newOrder.id);
-    clearCart();
+  const validate = (values) => {
+    const errors = {};
+    
+    const addressError = validateMinLength(values.address, 5, 'Адрес');
+    if (addressError) errors.address = addressError;
+
+    const phoneError = validatePhone(values.phone);
+    if (phoneError) errors.phone = phoneError;
+
+    return errors;
   };
+
+  const handleCreateOrder = (values) => {
+    setServerError("");
+    try {
+      const newOrder = mockDb.createOrder({
+        userId: user.id,
+        userName: user.username,
+        items: cart,
+        total: cartTotal,
+        address: values.address,
+        phone: values.phone,
+        status: "Принят",
+      });
+      setOrderId(newOrder.id);
+      clearCart();
+    } catch (err) {
+      setServerError(err.message);
+    }
+  };
+
+  const {
+    values,
+    errors,
+    touched,
+    handleChange,
+    handleBlur,
+    handleSubmit
+  } = useFormValidation(
+    { address: "", phone: "" },
+    validate,
+    handleCreateOrder
+  );
 
   if (orderId) {
     return (
@@ -78,6 +109,20 @@ const Checkout = () => {
       </h2>
 
       <div className="card">
+        {serverError && (
+          <div
+            style={{
+              backgroundColor: "#fee2e2",
+              color: "#dc2626",
+              padding: "0.8rem",
+              borderRadius: "var(--radius)",
+              marginBottom: "1rem",
+              fontSize: "0.9rem",
+            }}
+          >
+            {serverError}
+          </div>
+        )}
         <form
           onSubmit={handleSubmit}
           className="grid"
@@ -115,16 +160,17 @@ const Checkout = () => {
               Адрес доставки
             </label>
             <textarea
-              className="input"
+              name="address"
+              className={`input ${touched.address && errors.address ? 'input-error' : ''}`}
               required
               rows="3"
               placeholder="Город, улица, дом, квартира..."
-              value={formData.address}
-              onChange={(e) =>
-                setFormData({ ...formData, address: e.target.value })
-              }
+              value={values.address}
+              onChange={handleChange}
+              onBlur={handleBlur}
               style={{ resize: "vertical" }}
             />
+            {touched.address && errors.address && <span className="error-text">{errors.address}</span>}
           </div>
 
           <div>
@@ -139,15 +185,16 @@ const Checkout = () => {
               Телефон
             </label>
             <input
+              name="phone"
               type="tel"
-              className="input"
+              className={`input ${touched.phone && errors.phone ? 'input-error' : ''}`}
               required
               placeholder="+7 (___) ___-__-__"
-              value={formData.phone}
-              onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
-              }
+              value={values.phone}
+              onChange={handleChange}
+              onBlur={handleBlur}
             />
+            {touched.phone && errors.phone && <span className="error-text">{errors.phone}</span>}
           </div>
 
           <div

@@ -1,45 +1,69 @@
 import { useState } from 'react';
 import { useStore } from '../context/StoreContext';
+import { useFormValidation } from '../hooks/useFormValidation';
+import { validateEmail, validateMinLength } from '../utils/validation';
 
 const Register = () => {
   const { register, navigate } = useStore();
-  const [formData, setFormData] = useState({ 
-    username: '', 
-    email: '', 
-    password: '', 
-    confirmPassword: '',
-    role: 'покупатель'
-  });
-  const [error, setError] = useState('');
+  const [serverError, setServerError] = useState('');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setError('');
+  const validate = (values) => {
+    const errors = {};
+    
+    const usernameError = validateMinLength(values.username, 3, 'Имя пользователя');
+    if (usernameError) errors.username = usernameError;
 
-    if (formData.password.length < 4) {
-      return setError('Пароль должен быть не менее 4 символов');
-    }
-    if (formData.password !== formData.confirmPassword) {
-      return setError('Пароли не совпадают');
+    const emailError = validateEmail(values.email);
+    if (emailError) errors.email = emailError;
+
+    const passwordError = validateMinLength(values.password, 4, 'Пароль');
+    if (passwordError) errors.password = passwordError;
+
+    if (values.password !== values.confirmPassword) {
+      errors.confirmPassword = 'Пароли не совпадают';
     }
 
+    return errors;
+  };
+
+  const handleRegister = (values) => {
+    setServerError('');
     try {
-      const userData = { ...formData };
+      const userData = { ...values };
       delete userData.confirmPassword;
       register(userData);
     } catch (err) {
-      setError(err.message);
+      setServerError(err.message);
     }
   };
+
+  const {
+    values,
+    errors,
+    touched,
+    handleChange,
+    handleBlur,
+    handleSubmit
+  } = useFormValidation(
+    { 
+      username: '', 
+      email: '', 
+      password: '', 
+      confirmPassword: '',
+      role: 'покупатель'
+    },
+    validate,
+    handleRegister
+  );
 
   return (
     <div style={{ maxWidth: '450px', margin: '4rem auto' }}>
       <div className="card">
         <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Регистрация</h2>
         
-        {error && (
+        {serverError && (
           <div style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '0.8rem', borderRadius: 'var(--radius)', marginBottom: '1rem', fontSize: '0.9rem' }}>
-            {error}
+            {serverError}
           </div>
         )}
 
@@ -47,29 +71,36 @@ const Register = () => {
           <div>
             <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>Имя пользователя (Логин)</label>
             <input 
+              name="username"
               type="text" 
-              className="input" 
+              className={`input ${touched.username && errors.username ? 'input-error' : ''}`}
               required 
-              value={formData.username}
-              onChange={e => setFormData({ ...formData, username: e.target.value })}
+              value={values.username}
+              onChange={handleChange}
+              onBlur={handleBlur}
             />
+            {touched.username && errors.username && <span className="error-text">{errors.username}</span>}
           </div>
           <div>
             <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>Email</label>
             <input 
+              name="email"
               type="email" 
-              className="input" 
+              className={`input ${touched.email && errors.email ? 'input-error' : ''}`}
               required 
-              value={formData.email}
-              onChange={e => setFormData({ ...formData, email: e.target.value })}
+              value={values.email}
+              onChange={handleChange}
+              onBlur={handleBlur}
             />
+            {touched.email && errors.email && <span className="error-text">{errors.email}</span>}
           </div>
           <div>
             <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>Роль</label>
             <select 
+              name="role"
               className="input" 
-              value={formData.role}
-              onChange={e => setFormData({ ...formData, role: e.target.value })}
+              value={values.role}
+              onChange={handleChange}
             >
               <option value="покупатель">Покупатель</option>
               <option value="продавец">Продавец</option>
@@ -79,22 +110,28 @@ const Register = () => {
             <div>
               <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>Пароль</label>
               <input 
+                name="password"
                 type="password" 
-                className="input" 
+                className={`input ${touched.password && errors.password ? 'input-error' : ''}`}
                 required 
-                value={formData.password}
-                onChange={e => setFormData({ ...formData, password: e.target.value })}
+                value={values.password}
+                onChange={handleChange}
+                onBlur={handleBlur}
               />
+              {touched.password && errors.password && <span className="error-text">{errors.password}</span>}
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>Подтверждение</label>
               <input 
+                name="confirmPassword"
                 type="password" 
-                className="input" 
+                className={`input ${touched.confirmPassword && errors.confirmPassword ? 'input-error' : ''}`}
                 required 
-                value={formData.confirmPassword}
-                onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                value={values.confirmPassword}
+                onChange={handleChange}
+                onBlur={handleBlur}
               />
+              {touched.confirmPassword && errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
             </div>
           </div>
           <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>Создать аккаунт</button>
