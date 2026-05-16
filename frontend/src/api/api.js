@@ -53,5 +53,28 @@ export const api = {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to fetch orders');
     return data;
+  },
+
+  addSellerProduct: async (productData) => {
+    const res = await fetch('/api/products', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      },
+      body: JSON.stringify(productData),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to add product');
+    return data;
+  },
+
+  getSellerProducts: async () => {
+    const res = await fetch('/api/seller/products', {
+      headers: getAuthHeader(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to fetch seller products');
+    return data;
   }
 };

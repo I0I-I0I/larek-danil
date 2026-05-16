@@ -50,7 +50,7 @@ const Register = () => {
       email: '', 
       password: '', 
       confirmPassword: '',
-      role: 'покупатель'
+      role: 'buyer'
     },
     validate,
     handleRegister
@@ -102,8 +102,8 @@ const Register = () => {
               value={values.role}
               onChange={handleChange}
             >
-              <option value="покупатель">Покупатель</option>
-              <option value="продавец">Продавец</option>
+              <option value="buyer">Покупатель</option>
+              <option value="seller">Продавец</option>
             </select>
           </div>
           <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

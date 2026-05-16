@@ -14,13 +14,13 @@ const Catalog = () => {
 
   return (
     <div className="catalog-view">
-      <div className="flex justify-between" style={{ marginBottom: '2rem', alignItems: 'flex-end' }}>
+      <div className="catalog-header">
         <div>
           <h2 style={{ fontSize: '2rem' }}>Каталог товаров</h2>
           <p style={{ color: 'var(--color-text-muted)' }}>Найдено {filteredProducts.length} товаров</p>
         </div>
 
-        <div className="flex" style={{ gap: '0.5rem' }}>
+        <div className="catalog-categories">
           {categories.map(cat => (
             <button 
               key={cat}

@@ -6,14 +6,7 @@ const Home = () => {
 
   return (
     <div className="home-view">
-      <section style={{ 
-        padding: '4rem 0', 
-        textAlign: 'center',
-        background: 'linear-gradient(to bottom, #fffbeb, var(--color-bg))',
-        borderRadius: 'var(--radius)',
-        marginBottom: '3rem',
-        border: '1px solid var(--color-border)'
-      }}>
+      <section className="hero-section">
         <h2 style={{ fontSize: '3rem', marginBottom: '1.5rem' }}>Вещи, продукты, электроника</h2>
         <p style={{ fontSize: '1.2rem', color: 'var(--color-text-muted)', maxWidth: '600px', margin: '0 auto 2.5rem' }}>
           Добро пожаловать в «ЛАРЁК» — ваш уютный уголок качественных товаров. 

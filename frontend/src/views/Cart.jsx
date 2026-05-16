@@ -21,11 +21,11 @@ const Cart = () => {
     <div className="cart-view">
       <h2 style={{ fontSize: '2rem', marginBottom: '2rem' }}>Корзина</h2>
       
-      <div className="grid" style={{ gridTemplateColumns: '1fr 320px', alignItems: 'start' }}>
+      <div className="cart-layout">
         <div className="grid" style={{ gap: '1rem' }}>
           {cart.map(item => (
-            <div key={item.id} className="card flex justify-between" style={{ padding: '1rem' }}>
-              <div className="flex" style={{ gap: '1rem' }}>
+            <div key={item.id} className="card cart-item-card">
+              <div className="cart-item-info">
                 <img src={item.image} alt={item.name} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '4px' }} />
                 <div>
                   <h4 style={{ fontSize: '1.1rem' }}>{item.name}</h4>
@@ -34,7 +34,7 @@ const Cart = () => {
                 </div>
               </div>
 
-              <div className="flex" style={{ gap: '1.5rem' }}>
+              <div className="cart-item-controls">
                 <div className="flex" style={{ gap: '0.5rem', backgroundColor: '#f5f0e8', padding: '0.3rem', borderRadius: 'var(--radius)' }}>
                   <button className="btn-ghost" style={{ padding: '0.2rem' }} onClick={() => updateQuantity(item.id, -1)}>
                     <Minus size={16} />

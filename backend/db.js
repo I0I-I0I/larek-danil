@@ -22,7 +22,8 @@ export const initDb = async () => {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE,
     email TEXT UNIQUE,
-    password TEXT
+    password TEXT,
+    role TEXT DEFAULT 'buyer'
   )`);
 
   // Products table
@@ -32,15 +33,28 @@ export const initDb = async () => {
     category TEXT,
     price INTEGER,
     description TEXT,
-    image TEXT
+    image TEXT,
+    seller_id INTEGER
   )`);
+
+  // Check if role column exists in users (for existing databases)
+  const userTableInfo = db.prepare("PRAGMA table_info(users)").all();
+  if (!userTableInfo.some(col => col.name === 'role')) {
+    db.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'buyer'");
+  }
+
+  // Check if seller_id column exists in products (for existing databases)
+  const productTableInfo = db.prepare("PRAGMA table_info(products)").all();
+  if (!productTableInfo.some(col => col.name === 'seller_id')) {
+    db.exec("ALTER TABLE products ADD COLUMN seller_id INTEGER");
+  }
 
   // Seed products if empty
   const count = db.prepare("SELECT COUNT(*) as count FROM products").get().count;
   if (count === 0) {
-    const insert = db.prepare("INSERT INTO products (id, name, category, price, description, image) VALUES (?, ?, ?, ?, ?, ?)");
+    const insert = db.prepare("INSERT INTO products (id, name, category, price, description, image, seller_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
     const insertMany = db.transaction((products) => {
-      for (const p of products) insert.run(p.id, p.name, p.category, p.price, p.description, p.image);
+      for (const p of products) insert.run(p.id, p.name, p.category, p.price, p.description, p.image, null);
     });
     insertMany(initialProducts);
   }

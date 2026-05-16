@@ -95,7 +95,7 @@ export const StoreProvider = ({ children }) => {
 
   const navigate = (newView) => {
     // Protected views
-    if (["cart", "checkout", "orders"].includes(newView) && !user) {
+    if (["cart", "checkout", "orders", "seller-dashboard"].includes(newView) && !user) {
       setView("login");
     } else {
       setView(newView);

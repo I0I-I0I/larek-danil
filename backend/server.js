@@ -38,20 +38,56 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
+app.post('/api/products', authenticateToken, async (req, res) => {
+  const { name, category, price, description, image } = req.body;
+  if (req.user.role !== 'seller') {
+    return res.status(403).json({ error: 'Only sellers can add products' });
+  }
+  if (!name || !category || !price) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    const result = await run(
+      'INSERT INTO products (name, category, price, description, image, seller_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, category, price, description, image, req.user.id]
+    );
+    res.json({ id: result.id, name, category, price, description, image, seller_id: req.user.id });
+  } catch (err) {
+    console.error('Error adding product:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/seller/products', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'seller') {
+    return res.status(403).json({ error: 'Only sellers can view this' });
+  }
+  try {
+    const products = await query('SELECT * FROM products WHERE seller_id = ?', [req.user.id]);
+    res.json(products);
+  } catch (err) {
+    console.error('Error fetching seller products:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Auth
 app.post('/api/register', async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, role } = req.body;
   if (!username || !email || !password) {
     return res.status(400).json({ error: 'Missing fields' });
   }
 
+  const userRole = role || 'buyer';
+
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await run(
-      'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
-      [username, email, hashedPassword]
+      'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)',
+      [username, email, hashedPassword, userRole]
     );
-    const user = { id: result.id, username, email };
+    const user = { id: result.id, username, email, role: userRole };
     const token = jwt.sign(user, SECRET_KEY);
     res.json({ user, token });
   } catch (err) {

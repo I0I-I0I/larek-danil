@@ -9,6 +9,7 @@ import RegisterView from './views/Register';
 import CartView from './views/Cart';
 import CheckoutView from './views/Checkout';
 import OrdersView from './views/Orders';
+import SellerDashboardView from './views/SellerDashboard';
 
 function App() {
   const { view, navigate, user, logout, cartCount } = useStore();
@@ -22,6 +23,7 @@ function App() {
       case 'cart': return <CartView />;
       case 'checkout': return <CheckoutView />;
       case 'orders': return <OrdersView />;
+      case 'seller-dashboard': return <SellerDashboardView />;
       default: return <HomeView />;
     }
   };
@@ -29,25 +31,18 @@ function App() {
   return (
     <div className="app-layout" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {/* Header */}
-      <header style={{ 
-        backgroundColor: 'var(--color-surface)', 
-        borderBottom: '2px solid var(--color-border)',
-        padding: '1rem 0',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        boxShadow: 'var(--shadow-sm)'
-      }}>
-        <div className="container flex justify-between">
-          <div className="flex" style={{ gap: '2rem' }}>
+      <header className="app-header">
+        <div className="container header-container">
+          <div className="header-left">
             <h1 onClick={() => navigate('home')} style={{ cursor: 'pointer', fontSize: '1.8rem' }}>ЛАРЁК</h1>
-            <nav className="flex" style={{ gap: '1.5rem' }}>
+            <nav className="header-nav">
               <button className="btn-ghost btn" onClick={() => navigate('catalog')}>Каталог</button>
               {user && <button className="btn-ghost btn" onClick={() => navigate('orders')}>Мои заказы</button>}
+              {user && user.role === 'seller' && <button className="btn-ghost btn" onClick={() => navigate('seller-dashboard')}>Мои товары</button>}
             </nav>
           </div>
 
-          <div className="flex" style={{ gap: '1rem' }}>
+          <div className="header-actions">
             {user ? (
               <div className="flex" style={{ gap: '1rem' }}>
                 <div className="flex" style={{ gap: '0.5rem', color: 'var(--color-text-muted)' }}>
@@ -84,7 +79,7 @@ function App() {
         padding: '3rem 0',
         marginTop: '2rem'
       }}>
-        <div className="container grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+        <div className="container footer-content">
           <div>
             <h3 style={{ color: 'var(--color-primary)', marginBottom: '1rem' }}>ЛАРЁК</h3>
             <p style={{ opacity: 0.8, fontSize: '0.9rem' }}>Вещи, продукты и электроника в одном месте. Просто и со вкусом.</p>

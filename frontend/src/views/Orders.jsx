@@ -47,14 +47,7 @@ const Orders = () => {
       <div className="grid" style={{ gap: "1.5rem" }}>
         {orders.map((order) => (
           <div key={order.id} className="card">
-            <div
-              className="flex justify-between"
-              style={{
-                borderBottom: "1px solid var(--color-border)",
-                paddingBottom: "1rem",
-                marginBottom: "1.5rem",
-              }}
-            >
+            <div className="order-header-flex">
               <div>
                 <h3 style={{ fontSize: "1.2rem" }}>Заказ №{order.id}</h3>
                 <div
