@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import morgan from 'morgan';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { initDb, query, get, run } from './db.js';
@@ -8,6 +9,7 @@ const app = express();
 const port = 3000;
 const SECRET_KEY = 'super_secret_key_larek'; // In production, this should be in .env
 
+app.use(morgan('dev'));
 app.use(cors());
 app.use(express.json());
 
@@ -31,6 +33,7 @@ app.get('/api/products', async (req, res) => {
     const products = await query('SELECT * FROM products');
     res.json(products);
   } catch (err) {
+    console.error('Error fetching products:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -55,6 +58,7 @@ app.post('/api/register', async (req, res) => {
     if (err.message.includes('UNIQUE constraint failed')) {
       res.status(400).json({ error: 'Username or email already exists' });
     } else {
+      console.error('Error during registration:', err);
       res.status(500).json({ error: err.message });
     }
   }
@@ -77,6 +81,7 @@ app.post('/api/login', async (req, res) => {
     const token = jwt.sign(userWithoutPassword, SECRET_KEY);
     res.json({ user: userWithoutPassword, token });
   } catch (err) {
+    console.error('Error during login:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -104,6 +109,7 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
 
     res.json({ id: orderId });
   } catch (err) {
+    console.error('Error creating order:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -127,6 +133,7 @@ app.get('/api/orders', authenticateToken, async (req, res) => {
     
     res.json(orders);
   } catch (err) {
+    console.error('Error fetching orders:', err);
     res.status(500).json({ error: err.message });
   }
 });
