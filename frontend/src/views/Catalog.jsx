@@ -3,7 +3,7 @@ import { useStore } from '../context/StoreContext';
 import { Plus } from 'lucide-react';
 
 const Catalog = () => {
-  const { products, addToCart } = useStore();
+  const { products, addToCart, user, navigate } = useStore();
   const [category, setCategory] = useState('все');
 
   const filteredProducts = category === 'все' 
@@ -20,17 +20,29 @@ const Catalog = () => {
           <p style={{ color: 'var(--color-text-muted)' }}>Найдено {filteredProducts.length} товаров</p>
         </div>
 
-        <div className="catalog-categories">
-          {categories.map(cat => (
+        <div className="flex" style={{ gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="catalog-categories">
+            {categories.map(cat => (
+              <button 
+                key={cat}
+                className={`btn ${category === cat ? 'btn-primary' : 'btn-ghost'}`}
+                style={{ padding: '0.4rem 1rem', fontSize: '0.9rem' }}
+                onClick={() => setCategory(cat)}
+              >
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {user && user.role === 'seller' && (
             <button 
-              key={cat}
-              className={`btn ${category === cat ? 'btn-primary' : 'btn-ghost'}`}
-              style={{ padding: '0.4rem 1rem', fontSize: '0.9rem' }}
-              onClick={() => setCategory(cat)}
+              className="btn btn-outline" 
+              style={{ padding: '0.4rem 1rem', fontSize: '0.9rem' }} 
+              onClick={() => navigate('seller-dashboard')}
             >
-              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              <Plus size={18} /> Добавить товар
             </button>
-          ))}
+          )}
         </div>
       </div>
 

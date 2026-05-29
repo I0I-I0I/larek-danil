@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../context/StoreContext';
 import { api } from '../api/api';
-import { Package, Plus, Loader2 } from 'lucide-react';
+import { Package, Plus, Loader2, Edit2, Trash2 } from 'lucide-react';
 
 const SellerDashboard = () => {
-  const { user } = useStore();
+  const { user, refreshProducts } = useStore();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
   
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -25,6 +27,7 @@ const SellerDashboard = () => {
       const data = await api.getSellerProducts();
       setProducts(data);
     } catch (err) {
+      console.error('Error fetching seller products:', err);
       setError('Не удалось загрузить ваши товары');
     } finally {
       setLoading(false);
@@ -35,16 +38,31 @@ const SellerDashboard = () => {
     fetchSellerProducts();
   }, []);
 
-  const handleAddProduct = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsAdding(true);
     setError('');
+    setSuccessMessage('');
     try {
-      const added = await api.addSellerProduct({
-        ...newProduct,
-        price: parseInt(newProduct.price)
-      });
-      setProducts([added, ...products]);
+      if (editingProduct) {
+        // Edit flow
+        const updated = await api.editSellerProduct(editingProduct.id, {
+          ...newProduct,
+          price: parseInt(newProduct.price)
+        });
+        setProducts(products.map(p => p.id === editingProduct.id ? updated : p));
+        setEditingProduct(null);
+        setSuccessMessage('Товар успешно обновлен!');
+      } else {
+        // Add flow
+        const added = await api.addSellerProduct({
+          ...newProduct,
+          price: parseInt(newProduct.price)
+        });
+        setProducts([added, ...products]);
+        setSuccessMessage('Товар успешно добавлен!');
+      }
+      
       setNewProduct({
         name: '',
         category: 'вещи',
@@ -52,11 +70,64 @@ const SellerDashboard = () => {
         description: '',
         image: ''
       });
-      alert('Товар успешно добавлен!');
+      
+      if (refreshProducts) {
+        await refreshProducts();
+      }
     } catch (err) {
-      setError(err.message || 'Ошибка при добавлении товара');
+      setError(err.message || 'Ошибка при сохранении товара');
     } finally {
       setIsAdding(false);
+    }
+  };
+
+  const startEdit = (product) => {
+    setEditingProduct(product);
+    setNewProduct({
+      name: product.name,
+      category: product.category,
+      price: product.price.toString(),
+      description: product.description || '',
+      image: product.image || ''
+    });
+    setError('');
+    setSuccessMessage('');
+  };
+
+  const cancelEdit = () => {
+    setEditingProduct(null);
+    setNewProduct({
+      name: '',
+      category: 'вещи',
+      price: '',
+      description: '',
+      image: ''
+    });
+    setError('');
+    setSuccessMessage('');
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    if (!window.confirm('Вы уверены, что хотите удалить этот товар?')) {
+      return;
+    }
+    
+    setError('');
+    setSuccessMessage('');
+    try {
+      await api.deleteSellerProduct(productId);
+      setProducts(products.filter(p => p.id !== productId));
+      setSuccessMessage('Товар успешно удален!');
+      
+      if (editingProduct && editingProduct.id === productId) {
+        cancelEdit();
+      }
+      
+      if (refreshProducts) {
+        await refreshProducts();
+      }
+    } catch (err) {
+      setError(err.message || 'Ошибка при удалении товара');
     }
   };
 
@@ -76,10 +147,11 @@ const SellerDashboard = () => {
       </div>
 
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', alignItems: 'start' }}>
-        {/* Form to add product */}
+        {/* Form to add/edit product */}
         <div className="card">
           <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Plus size={20} /> Добавить товар
+            {editingProduct ? <Edit2 size={20} /> : <Plus size={20} />}
+            {editingProduct ? 'Редактировать товар' : 'Добавить товар'}
           </h3>
           
           {error && (
@@ -88,7 +160,13 @@ const SellerDashboard = () => {
             </div>
           )}
 
-          <form onSubmit={handleAddProduct} className="grid" style={{ gap: '1rem' }}>
+          {successMessage && (
+            <div style={{ backgroundColor: '#ecfdf5', color: '#047857', padding: '0.8rem', borderRadius: 'var(--radius)', marginBottom: '1rem', fontSize: '0.9rem', border: '1px solid #a7f3d0' }}>
+              {successMessage}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="grid" style={{ gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>Название</label>
               <input 
@@ -143,9 +221,25 @@ const SellerDashboard = () => {
               />
             </div>
 
-            <button type="submit" className="btn btn-primary" disabled={isAdding}>
-              {isAdding ? 'Добавление...' : 'Добавить товар'}
-            </button>
+            {!editingProduct ? (
+              <button type="submit" className="btn btn-primary" disabled={isAdding}>
+                {isAdding ? 'Добавление...' : 'Добавить товар'}
+              </button>
+            ) : (
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={isAdding}>
+                  {isAdding ? 'Сохранение...' : 'Сохранить'}
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-ghost" 
+                  onClick={cancelEdit} 
+                  style={{ border: '1px solid var(--color-border)' }}
+                >
+                  Отмена
+                </button>
+              </div>
+            )}
           </form>
         </div>
 
@@ -161,11 +255,11 @@ const SellerDashboard = () => {
             </div>
           ) : (
             products.map(product => (
-              <div key={product.id} className="card flex" style={{ gap: '1rem', padding: '1rem' }}>
+              <div key={product.id} className="card flex" style={{ gap: '1rem', padding: '1rem', alignItems: 'flex-start' }}>
                 <img 
                   src={product.image || 'https://via.placeholder.com/80'} 
                   alt={product.name} 
-                  style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: 'var(--radius)' }}
+                  style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: 'var(--radius)', marginTop: '0.2rem' }}
                 />
                 <div style={{ flex: 1 }}>
                   <div className="flex justify-between">
@@ -173,7 +267,24 @@ const SellerDashboard = () => {
                     <span style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{product.price} ₽</span>
                   </div>
                   <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>{product.category}</p>
-                  <p style={{ fontSize: '0.9rem', margin: 0 }} className="line-clamp-1">{product.description}</p>
+                  <p style={{ fontSize: '0.9rem', margin: 0 }} className="line-clamp-2">{product.description}</p>
+                  
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                    <button 
+                      onClick={() => startEdit(product)} 
+                      className="btn btn-outline" 
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', height: 'auto', borderRadius: 'var(--radius)', border: '1px solid var(--color-primary)' }}
+                    >
+                      <Edit2 size={13} /> Редактировать
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteProduct(product.id)} 
+                      className="btn btn-outline" 
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', height: 'auto', borderRadius: 'var(--radius)', border: '1px solid #dc2626', color: '#dc2626' }}
+                    >
+                      <Trash2 size={13} /> Удалить
+                    </button>
+                  </div>
                 </div>
               </div>
             ))

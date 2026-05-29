@@ -76,5 +76,29 @@ export const api = {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to fetch seller products');
     return data;
+  },
+
+  editSellerProduct: async (productId, productData) => {
+    const res = await fetch(`/api/products/${productId}`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      },
+      body: JSON.stringify(productData),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to edit product');
+    return data;
+  },
+
+  deleteSellerProduct: async (productId) => {
+    const res = await fetch(`/api/products/${productId}`, {
+      method: 'DELETE',
+      headers: getAuthHeader(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete product');
+    return data;
   }
 };

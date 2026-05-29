@@ -13,16 +13,17 @@ export const StoreProvider = ({ children }) => {
   const [view, setView] = useState("home"); // 'home', 'catalog', 'login', 'register', 'cart', 'checkout', 'orders'
   const [products, setProducts] = useState([]);
 
+  const refreshProducts = async () => {
+    try {
+      const data = await api.getProducts();
+      setProducts(data);
+    } catch (err) {
+      console.error("Failed to fetch products:", err);
+    }
+  };
+
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const data = await api.getProducts();
-        setProducts(data);
-      } catch (err) {
-        console.error("Failed to fetch products:", err);
-      }
-    };
-    fetchProducts();
+    refreshProducts();
   }, []);
 
   useEffect(() => {
@@ -120,6 +121,7 @@ export const StoreProvider = ({ children }) => {
         view,
         navigate,
         products,
+        refreshProducts,
       }}
     >
       {children}

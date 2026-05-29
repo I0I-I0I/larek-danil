@@ -30,7 +30,7 @@ const authenticateToken = (req, res, next) => {
 // Products
 app.get('/api/products', async (req, res) => {
   try {
-    const products = await query('SELECT * FROM products');
+    const products = await query('SELECT * FROM products ORDER BY id DESC');
     res.json(products);
   } catch (err) {
     console.error('Error fetching products:', err);
@@ -59,12 +59,71 @@ app.post('/api/products', authenticateToken, async (req, res) => {
   }
 });
 
+app.put('/api/products/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const { name, category, price, description, image } = req.body;
+
+  if (req.user.role !== 'seller') {
+    return res.status(403).json({ error: 'Only sellers can edit products' });
+  }
+
+  if (!name || !category || !price) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    const product = await get('SELECT * FROM products WHERE id = ?', [id]);
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    if (product.seller_id !== req.user.id) {
+      return res.status(403).json({ error: 'Only the product owner can edit this product' });
+    }
+
+    await run(
+      'UPDATE products SET name = ?, category = ?, price = ?, description = ?, image = ? WHERE id = ?',
+      [name, category, price, description, image, id]
+    );
+
+    res.json({ id: parseInt(id), name, category, price, description, image, seller_id: req.user.id });
+  } catch (err) {
+    console.error('Error updating product:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/products/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+
+  if (req.user.role !== 'seller') {
+    return res.status(403).json({ error: 'Only sellers can delete products' });
+  }
+
+  try {
+    const product = await get('SELECT * FROM products WHERE id = ?', [id]);
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    if (product.seller_id !== req.user.id) {
+      return res.status(403).json({ error: 'Only the product owner can delete this product' });
+    }
+
+    await run('DELETE FROM products WHERE id = ?', [id]);
+    res.json({ message: 'Product successfully deleted' });
+  } catch (err) {
+    console.error('Error deleting product:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/seller/products', authenticateToken, async (req, res) => {
   if (req.user.role !== 'seller') {
     return res.status(403).json({ error: 'Only sellers can view this' });
   }
   try {
-    const products = await query('SELECT * FROM products WHERE seller_id = ?', [req.user.id]);
+    const products = await query('SELECT * FROM products WHERE seller_id = ? ORDER BY id DESC', [req.user.id]);
     res.json(products);
   } catch (err) {
     console.error('Error fetching seller products:', err);
