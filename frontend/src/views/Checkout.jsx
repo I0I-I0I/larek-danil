@@ -221,6 +221,19 @@ const Checkout = () => {
           </button>
         </form>
       </div>
+      <div style={{ 
+        marginTop: '3rem', 
+        padding: '1.5rem',
+        textAlign: 'center', 
+        fontSize: '1.1rem', 
+        color: 'var(--color-primary)', 
+        backgroundColor: 'var(--color-bg-secondary)',
+        borderRadius: 'var(--radius)',
+        border: '2px solid var(--color-primary)',
+        fontWeight: 600
+      }}>
+        проект создан в рамках образовательного процесса и не предназначен для коммерческой реализации
+      </div>
     </div>
   );
 };
