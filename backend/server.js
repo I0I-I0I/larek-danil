@@ -39,7 +39,7 @@ app.get('/api/products', async (req, res) => {
 });
 
 app.post('/api/products', authenticateToken, async (req, res) => {
-  const { name, category, price, description, image } = req.body;
+  const { name, category, price, description, image, brand, full_description, specs, in_stock } = req.body;
   if (req.user.role !== 'seller') {
     return res.status(403).json({ error: 'Only sellers can add products' });
   }
@@ -49,10 +49,22 @@ app.post('/api/products', authenticateToken, async (req, res) => {
 
   try {
     const result = await run(
-      'INSERT INTO products (name, category, price, description, image, seller_id) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, category, price, description, image, req.user.id]
+      'INSERT INTO products (name, category, price, description, image, seller_id, brand, full_description, specs, in_stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [name, category, price, description, image, req.user.id, brand || null, full_description || null, specs || null, in_stock !== undefined ? parseInt(in_stock) : 0]
     );
-    res.json({ id: result.id, name, category, price, description, image, seller_id: req.user.id });
+    res.json({ 
+      id: result.id, 
+      name, 
+      category, 
+      price, 
+      description, 
+      image, 
+      seller_id: req.user.id,
+      brand: brand || null,
+      full_description: full_description || null,
+      specs: specs || null,
+      in_stock: in_stock !== undefined ? parseInt(in_stock) : 0
+    });
   } catch (err) {
     console.error('Error adding product:', err);
     res.status(500).json({ error: err.message });
@@ -61,7 +73,7 @@ app.post('/api/products', authenticateToken, async (req, res) => {
 
 app.put('/api/products/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
-  const { name, category, price, description, image } = req.body;
+  const { name, category, price, description, image, brand, full_description, specs, in_stock } = req.body;
 
   if (req.user.role !== 'seller') {
     return res.status(403).json({ error: 'Only sellers can edit products' });
@@ -82,11 +94,23 @@ app.put('/api/products/:id', authenticateToken, async (req, res) => {
     }
 
     await run(
-      'UPDATE products SET name = ?, category = ?, price = ?, description = ?, image = ? WHERE id = ?',
-      [name, category, price, description, image, id]
+      'UPDATE products SET name = ?, category = ?, price = ?, description = ?, image = ?, brand = ?, full_description = ?, specs = ?, in_stock = ? WHERE id = ?',
+      [name, category, price, description, image, brand || null, full_description || null, specs || null, in_stock !== undefined ? parseInt(in_stock) : 0, id]
     );
 
-    res.json({ id: parseInt(id), name, category, price, description, image, seller_id: req.user.id });
+    res.json({ 
+      id: parseInt(id), 
+      name, 
+      category, 
+      price, 
+      description, 
+      image, 
+      seller_id: req.user.id,
+      brand: brand || null,
+      full_description: full_description || null,
+      specs: specs || null,
+      in_stock: in_stock !== undefined ? parseInt(in_stock) : 0
+    });
   } catch (err) {
     console.error('Error updating product:', err);
     res.status(500).json({ error: err.message });

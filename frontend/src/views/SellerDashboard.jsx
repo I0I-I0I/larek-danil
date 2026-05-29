@@ -17,7 +17,11 @@ const SellerDashboard = () => {
     category: 'вещи',
     price: '',
     description: '',
-    image: ''
+    image: '',
+    brand: '',
+    full_description: '',
+    specs: '',
+    in_stock: ''
   });
 
   const categories = ['вещи', 'продукты', 'электроника'];
@@ -48,7 +52,8 @@ const SellerDashboard = () => {
         // Edit flow
         const updated = await api.editSellerProduct(editingProduct.id, {
           ...newProduct,
-          price: parseInt(newProduct.price)
+          price: parseInt(newProduct.price),
+          in_stock: parseInt(newProduct.in_stock) || 0
         });
         setProducts(products.map(p => p.id === editingProduct.id ? updated : p));
         setEditingProduct(null);
@@ -57,7 +62,8 @@ const SellerDashboard = () => {
         // Add flow
         const added = await api.addSellerProduct({
           ...newProduct,
-          price: parseInt(newProduct.price)
+          price: parseInt(newProduct.price),
+          in_stock: parseInt(newProduct.in_stock) || 0
         });
         setProducts([added, ...products]);
         setSuccessMessage('Товар успешно добавлен!');
@@ -68,7 +74,11 @@ const SellerDashboard = () => {
         category: 'вещи',
         price: '',
         description: '',
-        image: ''
+        image: '',
+        brand: '',
+        full_description: '',
+        specs: '',
+        in_stock: ''
       });
       
       if (refreshProducts) {
@@ -88,7 +98,11 @@ const SellerDashboard = () => {
       category: product.category,
       price: product.price.toString(),
       description: product.description || '',
-      image: product.image || ''
+      image: product.image || '',
+      brand: product.brand || '',
+      full_description: product.full_description || '',
+      specs: product.specs || '',
+      in_stock: product.in_stock !== undefined ? product.in_stock.toString() : '0'
     });
     setError('');
     setSuccessMessage('');
@@ -101,7 +115,11 @@ const SellerDashboard = () => {
       category: 'вещи',
       price: '',
       description: '',
-      image: ''
+      image: '',
+      brand: '',
+      full_description: '',
+      specs: '',
+      in_stock: ''
     });
     setError('');
     setSuccessMessage('');
@@ -177,6 +195,17 @@ const SellerDashboard = () => {
                 onChange={e => setNewProduct({...newProduct, name: e.target.value})}
               />
             </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>Бренд / Производитель</label>
+              <input 
+                type="text" 
+                className="input" 
+                placeholder="Например, RetroThread"
+                value={newProduct.brand}
+                onChange={e => setNewProduct({...newProduct, brand: e.target.value})}
+              />
+            </div>
             
             <div>
               <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>Категория</label>
@@ -201,12 +230,45 @@ const SellerDashboard = () => {
             </div>
 
             <div>
-              <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>Описание</label>
+              <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>Количество в наличии</label>
+              <input 
+                type="number" 
+                className="input" 
+                placeholder="10"
+                value={newProduct.in_stock}
+                onChange={e => setNewProduct({...newProduct, in_stock: e.target.value})}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>Краткое описание (для превью)</label>
+              <textarea 
+                className="input" 
+                rows="2"
+                value={newProduct.description}
+                onChange={e => setNewProduct({...newProduct, description: e.target.value})}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>Подробное описание (полная страница)</label>
+              <textarea 
+                className="input" 
+                rows="4"
+                placeholder="Подробное описание товара..."
+                value={newProduct.full_description}
+                onChange={e => setNewProduct({...newProduct, full_description: e.target.value})}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>Характеристики (по одной на строку)</label>
               <textarea 
                 className="input" 
                 rows="3"
-                value={newProduct.description}
-                onChange={e => setNewProduct({...newProduct, description: e.target.value})}
+                placeholder="Материал: Хлопок 100%&#10;Размер: XL"
+                value={newProduct.specs}
+                onChange={e => setNewProduct({...newProduct, specs: e.target.value})}
               />
             </div>
 
@@ -266,7 +328,9 @@ const SellerDashboard = () => {
                     <h4 style={{ margin: 0 }}>{product.name}</h4>
                     <span style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{product.price} ₽</span>
                   </div>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>{product.category}</p>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>
+                    {product.category} {product.brand && `• ${product.brand}`} {product.in_stock !== undefined && `• В наличии: ${product.in_stock} шт.`}
+                  </p>
                   <p style={{ fontSize: '0.9rem', margin: 0 }} className="line-clamp-2">{product.description}</p>
                   
                   <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
