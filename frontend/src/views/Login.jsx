@@ -41,8 +41,10 @@ const Login = () => {
   );
 
   return (
-    <div style={{ maxWidth: '400px', margin: '4rem auto' }}>
-      <div className="card">
+    <>
+      <div className="login-page-bg"></div>
+      <div style={{ maxWidth: '400px', margin: '4rem auto' }}>
+        <div className="card">
         <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Вход в систему</h2>
         
         {serverError && (
@@ -86,6 +88,7 @@ const Login = () => {
         </p>
       </div>
     </div>
+    </>
   );
 };
 

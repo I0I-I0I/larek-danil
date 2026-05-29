@@ -57,8 +57,10 @@ const Register = () => {
   );
 
   return (
-    <div style={{ maxWidth: '450px', margin: '4rem auto' }}>
-      <div className="card">
+    <>
+      <div className="login-page-bg"></div>
+      <div style={{ maxWidth: '450px', margin: '4rem auto' }}>
+        <div className="card">
         <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Регистрация</h2>
         
         {serverError && (
@@ -142,6 +144,7 @@ const Register = () => {
         </p>
       </div>
     </div>
+    </>
   );
 };
 

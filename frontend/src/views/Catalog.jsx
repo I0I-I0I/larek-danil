@@ -60,31 +60,31 @@ const Catalog = () => {
           <p style={{ color: 'var(--color-text-muted)' }}>Найдено {filteredProducts.length} товаров</p>
         </div>
 
-        <div className="flex" style={{ gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div className="catalog-categories">
-            {categories.map(cat => (
-              <button 
-                key={cat}
-                className={`btn ${category === cat ? 'btn-primary' : 'btn-ghost'}`}
-                style={{ padding: '0.4rem 1rem', fontSize: '0.9rem' }}
-                onClick={() => setCategory(cat)}
-              >
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </button>
-            ))}
-          </div>
+          <div className="flex" style={{ gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="catalog-categories">
+              {categories.map(cat => (
+                <button 
+                  key={cat}
+                  className={`btn ${category === cat ? 'btn-primary' : 'btn-ghost'}`}
+                  style={{ padding: '0.4rem 1rem', fontSize: '0.9rem' }}
+                  onClick={() => setCategory(cat)}
+                >
+                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                </button>
+              ))}
+            </div>
 
-          {user && user.role === 'seller' && (
-            <button 
-              className="btn btn-outline" 
-              style={{ padding: '0.4rem 1rem', fontSize: '0.9rem' }} 
-              onClick={() => navigate('seller-dashboard')}
-            >
-              <Plus size={18} /> Добавить товар
-            </button>
-          )}
+            {user && user.role === 'seller' && (
+              <button 
+                className="btn btn-outline" 
+                style={{ padding: '0.4rem 1rem', fontSize: '0.9rem' }} 
+                onClick={() => navigate('seller-dashboard')}
+              >
+                <Plus size={18} /> Добавить товар
+              </button>
+            )}
+          </div>
         </div>
-      </div>
 
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
         {filteredProducts.map(product => (

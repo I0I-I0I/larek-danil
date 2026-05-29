@@ -28,8 +28,10 @@ function App() {
     }
   };
 
+  const isAuthPage = ['login', 'register'].includes(view);
+
   return (
-    <div className="app-layout" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div className={`app-layout ${isAuthPage ? 'auth-layout' : ''}`} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {/* Header */}
       <header className="app-header">
         <div className="container header-container">
