@@ -3,15 +3,42 @@ import cors from 'cors';
 import morgan from 'morgan';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { initDb, query, get, run } from './db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = 3000;
 const SECRET_KEY = 'super_secret_key_larek'; // In production, this should be in .env
 
+// Ensure uploads directory exists
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Multer configuration
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
+
 app.use(morgan('dev'));
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(uploadDir));
 
 // Auth Middleware
 const authenticateToken = (req, res, next) => {
@@ -153,6 +180,16 @@ app.get('/api/seller/products', authenticateToken, async (req, res) => {
     console.error('Error fetching seller products:', err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// Image Upload
+app.post('/api/upload', authenticateToken, upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+  // The URL should be relative to the domain, e.g., /uploads/filename.jpg
+  const imageUrl = `/uploads/${req.file.filename}`;
+  res.json({ imageUrl });
 });
 
 // Auth

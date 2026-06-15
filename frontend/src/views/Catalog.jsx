@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '../context/StoreContext';
 import { Plus, X, ShoppingBag } from 'lucide-react';
+import { getProductImage } from '../utils/imageMapper';
 
 const Catalog = () => {
   const { products, addToCart, user, navigate } = useStore();
@@ -111,7 +112,7 @@ const Catalog = () => {
           >
             <div style={{ height: '200px', overflow: 'hidden' }}>
               <img 
-                src={product.image} 
+                src={getProductImage(product.image, product.category, product.name)} 
                 alt={product.name} 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
@@ -215,7 +216,7 @@ const Catalog = () => {
               {/* Product Image */}
               <div style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--color-border)', height: '320px' }}>
                 <img 
-                  src={selectedProduct.image} 
+                  src={getProductImage(selectedProduct.image, selectedProduct.category, selectedProduct.name)} 
                   alt={selectedProduct.name} 
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />

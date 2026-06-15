@@ -1,12 +1,12 @@
 const DB_KEY = 'larek_db';
 
 const initialProducts = [
-  { id: 1, name: 'Стильная рубашка', category: 'вещи', price: 2500, description: 'Хлопковая рубашка для любого случая.', image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500' },
-  { id: 2, name: 'Кеды "Ретро"', category: 'вещи', price: 4200, description: 'Удобные кеды в классическом стиле.', image: 'https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=500' },
-  { id: 3, name: 'Свежий багет', category: 'продукты', price: 120, description: 'Хрустящий багет прямо из печи.', image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500' },
-  { id: 4, name: 'Горный мед', category: 'продукты', price: 850, description: 'Натуральный мед из алтайских трав.', image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=500' },
-  { id: 5, name: 'Радиоприемник', category: 'электроника', price: 3400, description: 'Винтажный радиоприемник с современным звуком.', image: 'https://images.unsplash.com/photo-1558537330-3490799863fc?w=500' },
-  { id: 6, name: 'Наушники Hi-Fi', category: 'электроника', price: 7800, description: 'Чистый звук и глубокие басы.', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500' },
+  { id: 1, name: 'Стильная рубашка', category: 'вещи', price: 2500, description: 'Хлопковая рубашка для любого случая.', image: '/images/previews/shirt.jpg' },
+  { id: 2, name: 'Кеды "Ретро"', category: 'вещи', price: 4200, description: 'Удобные кеды в классическом стиле.', image: '/images/previews/sneakers.jpg' },
+  { id: 3, name: 'Свежий багет', category: 'продукты', price: 120, description: 'Хрустящий багет прямо из печи.', image: '/images/previews/baguette.jpg' },
+  { id: 4, name: 'Горный мед', category: 'продукты', price: 850, description: 'Натуральный мед из алтайских трав.', image: '/images/previews/honey.jpg' },
+  { id: 5, name: 'Радиоприемник', category: 'электроника', price: 3400, description: 'Винтажный радиоприемник с современным звуком.', image: '/images/previews/radio.jpg' },
+  { id: 6, name: 'Наушники Hi-Fi', category: 'электроника', price: 7800, description: 'Чистый звук и глубокие басы.', image: '/images/previews/headphones.jpg' },
 ];
 
 const getDb = () => {

@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useStore } from '../context/StoreContext';
 import { api } from '../api/api';
-import { Package, Plus, Loader2, Edit2, Trash2 } from 'lucide-react';
+import { Package, Plus, Loader2, Edit2, Trash2, Upload, Image as ImageIcon } from 'lucide-react';
+import { getProductImage } from '../utils/imageMapper';
 
 const SellerDashboard = () => {
   const { user, refreshProducts } = useStore();
@@ -10,7 +11,10 @@ const SellerDashboard = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef(null);
   
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -41,6 +45,54 @@ const SellerDashboard = () => {
   useEffect(() => {
     fetchSellerProducts();
   }, []);
+
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+    
+    // Check if it's an image
+    if (!file.type.startsWith('image/')) {
+      setError('Пожалуйста, выберите изображение');
+      return;
+    }
+
+    setIsUploading(true);
+    setError('');
+    try {
+      const { imageUrl } = await api.uploadImage(file);
+      setNewProduct(prev => ({ ...prev, image: imageUrl }));
+      setSuccessMessage('Изображение успешно загружено!');
+    } catch (err) {
+      setError(err.message || 'Ошибка при загрузке изображения');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleChange = (e) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files[0]) {
+      handleFileUpload(e.target.files[0]);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -273,14 +325,71 @@ const SellerDashboard = () => {
             </div>
 
             <div>
-              <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>URL изображения</label>
-              <input 
-                type="url" 
-                className="input" 
-                placeholder="https://images.unsplash.com/..."
-                value={newProduct.image}
-                onChange={e => setNewProduct({...newProduct, image: e.target.value})}
-              />
+              <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>Изображение товара</label>
+              
+              {/* Drag and Drop Zone */}
+              <div 
+                className={`upload-zone ${dragActive ? 'active' : ''}`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current.click()}
+                style={{
+                  border: '2px dashed var(--color-border)',
+                  borderRadius: 'var(--radius)',
+                  padding: '2rem',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  backgroundColor: dragActive ? 'var(--color-background-muted)' : 'transparent',
+                  transition: 'all 0.2s ease',
+                  marginBottom: '1rem',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+              >
+                <input 
+                  ref={fileInputRef}
+                  type="file" 
+                  style={{ display: 'none' }} 
+                  onChange={handleChange}
+                  accept="image/*"
+                />
+                
+                {isUploading ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="animate-spin" size={32} />
+                    <p style={{ fontSize: '0.9rem' }}>Загрузка...</p>
+                  </div>
+                ) : newProduct.image ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <img 
+                      src={getProductImage(newProduct.image, newProduct.category, newProduct.name)} 
+                      alt="Preview" 
+                      style={{ maxWidth: '100%', maxHeight: '150px', borderRadius: 'var(--radius)', objectFit: 'cover' }} 
+                    />
+                    <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Нажмите или перетащите, чтобы заменить</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <Upload size={32} style={{ color: 'var(--color-text-muted)' }} />
+                    <p style={{ fontSize: '0.9rem', fontWeight: 500 }}>Перетащите изображение сюда</p>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>или нажмите для выбора файла</p>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ position: 'relative' }}>
+                <ImageIcon size={16} style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
+                <input 
+                  type="text" 
+                  className="input" 
+                  style={{ paddingLeft: '2.5rem' }}
+                  placeholder="Или вставьте URL изображения..."
+                  value={newProduct.image}
+                  onChange={e => setNewProduct({...newProduct, image: e.target.value})}
+                />
+              </div>
             </div>
 
             {!editingProduct ? (
@@ -319,7 +428,7 @@ const SellerDashboard = () => {
             products.map(product => (
               <div key={product.id} className="card flex" style={{ gap: '1rem', padding: '1rem', alignItems: 'flex-start' }}>
                 <img 
-                  src={product.image || 'https://via.placeholder.com/80'} 
+                  src={getProductImage(product.image, product.category, product.name)} 
                   alt={product.name} 
                   style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: 'var(--radius)', marginTop: '0.2rem' }}
                 />

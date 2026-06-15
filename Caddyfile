@@ -1,6 +1,18 @@
-{$DOMAIN:localhost} {
+{
+    http_port 8080
+    https_port 8443
+}
+
+http://{$DOMAIN:localhost}:8080 {
+    redir https://{$DOMAIN:localhost}:8443{uri}
+}
+
+https://{$DOMAIN:localhost}:8443 {
     # Reverse proxy for API (keep /api prefix)
     reverse_proxy /api/* backend:3000
+
+    # Reverse proxy for uploaded images
+    reverse_proxy /uploads/* backend:3000
 
     # Everything else goes to the frontend
     reverse_proxy * frontend:80

@@ -1,5 +1,6 @@
 import { useStore } from '../context/StoreContext';
 import { Trash2, Plus, Minus, ArrowRight, ShoppingCart } from 'lucide-react';
+import { getProductImage } from '../utils/imageMapper';
 
 const Cart = () => {
   const { cart, cartTotal, updateQuantity, removeFromCart, navigate } = useStore();
@@ -26,7 +27,7 @@ const Cart = () => {
           {cart.map(item => (
             <div key={item.id} className="card cart-item-card">
               <div className="cart-item-info">
-                <img src={item.image} alt={item.name} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '4px' }} />
+                <img src={getProductImage(item.image, item.category, item.name)} alt={item.name} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '4px' }} />
                 <div>
                   <h4 style={{ fontSize: '1.1rem' }}>{item.name}</h4>
                   <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>{item.category}</p>

@@ -100,5 +100,19 @@ export const api = {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to delete product');
     return data;
+  },
+
+  uploadImage: async (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      headers: getAuthHeader(),
+      body: formData,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Image upload failed');
+    return data;
   }
 };

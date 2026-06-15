@@ -198,7 +198,7 @@ export const api = {
   createOrder: async (orderData) => {
     const res = await fetch('/api/orders', {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         ...getAuthHeader() // Прикрепляем токен, чтобы сервер знал, кто делает заказ
       },
@@ -230,7 +230,7 @@ export const StoreContext = createContext();
 export const StoreProvider = ({ children }) => {
   // Храним состояние корзины
   const [cart, setCart] = useState([]);
-  
+
   // Храним данные текущего пользователя
   const [user, setUser] = useState(null);
 
@@ -239,7 +239,7 @@ export const StoreProvider = ({ children }) => {
     setCart((prev) => {
       // Проверяем, есть ли уже такой товар в корзине
       const existing = prev.find((item) => item.id === product.id);
-      
+
       if (existing) {
         // Если есть, просто увеличиваем количество на 1
         return prev.map((item) =>
@@ -290,13 +290,13 @@ import { useStore } from '../context/StoreContext';
 const Catalog = () => {
   // Получаем список товаров и функцию добавления из глобального хранилища
   const { products, addToCart } = useStore();
-  
+
   // Состояние для фильтрации по категориям
   const [category, setCategory] = useState('все');
 
   // Фильтруем список перед отрисовкой
-  const filteredProducts = category === 'все' 
-    ? products 
+  const filteredProducts = category === 'все'
+    ? products
     : products.filter(p => p.category === category);
 
   return (
@@ -304,8 +304,8 @@ const Catalog = () => {
       {/* Кнопки переключения категорий */}
       <div className="filters">
         {['все', 'вещи', 'продукты', 'электроника'].map(cat => (
-          <button 
-            key={cat} 
+          <button
+            key={cat}
             onClick={() => setCategory(cat)}
             className={category === cat ? 'active' : ''}
           >
@@ -358,3 +358,51 @@ const Catalog = () => {
 - Обеспечения безопасности пользовательских данных.
 
 Данный код готов к масштабированию и может служить основой для реального интернет-магазина.
+
+```mermaid
+erDiagram
+    users {
+        INTEGER id PK
+        TEXT username UK
+        TEXT email UK
+        TEXT password
+        TEXT role
+    }
+
+    products {
+        INTEGER id PK
+        TEXT name
+        TEXT category
+        INTEGER price
+        TEXT description
+        TEXT image
+        INTEGER seller_id FK
+        TEXT brand
+        TEXT full_description
+        TEXT specs
+        INTEGER in_stock
+    }
+
+    orders {
+        INTEGER id PK
+        INTEGER user_id FK
+        TEXT address
+        TEXT phone
+        TEXT status
+        TEXT date
+        INTEGER total
+    }
+
+    order_items {
+        INTEGER id PK
+        INTEGER order_id FK
+        INTEGER product_id FK
+        INTEGER quantity
+        INTEGER price
+    }
+
+    users ||--o{ orders : "places"
+    users ||--o{ products : "sells"
+    orders ||--|{ order_items : "contains"
+    products ||--o{ order_items : "included_in"
+```
