@@ -99,7 +99,9 @@ export const initDb = async () => {
   // Drop products table if it exists but lacks new schema (brand column)
   const productTableCheck = db.prepare("PRAGMA table_info(products)").all();
   if (productTableCheck.length > 0 && !productTableCheck.some(col => col.name === 'brand')) {
+    db.exec("PRAGMA foreign_keys = OFF");
     db.exec("DROP TABLE products");
+    db.exec("PRAGMA foreign_keys = ON");
   }
 
   // Products table
