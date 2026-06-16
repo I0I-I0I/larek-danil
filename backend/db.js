@@ -10,6 +10,7 @@ const dbPath = process.env.DATABASE_PATH || join(__dirname, 'larek.db');
 mkdirSync(dirname(dbPath), { recursive: true });
 
 const db = new Database(dbPath);
+db.exec("PRAGMA foreign_keys = ON;");
 
 const initialProducts = [
   { 
@@ -96,14 +97,6 @@ export const initDb = async () => {
     role TEXT DEFAULT 'buyer'
   )`);
 
-  // Drop products table if it exists but lacks new schema (brand column)
-  const productTableCheck = db.prepare("PRAGMA table_info(products)").all();
-  if (productTableCheck.length > 0 && !productTableCheck.some(col => col.name === 'brand')) {
-    db.exec("PRAGMA foreign_keys = OFF");
-    db.exec("DROP TABLE products");
-    db.exec("PRAGMA foreign_keys = ON");
-  }
-
   // Products table
   db.exec(`CREATE TABLE IF NOT EXISTS products (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -118,18 +111,6 @@ export const initDb = async () => {
     specs TEXT,
     in_stock INTEGER
   )`);
-
-  // Check if role column exists in users (for existing databases)
-  const userTableInfo = db.prepare("PRAGMA table_info(users)").all();
-  if (!userTableInfo.some(col => col.name === 'role')) {
-    db.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'buyer'");
-  }
-
-  // Check if seller_id column exists in products (for existing databases)
-  const productTableInfo = db.prepare("PRAGMA table_info(products)").all();
-  if (!productTableInfo.some(col => col.name === 'seller_id')) {
-    db.exec("ALTER TABLE products ADD COLUMN seller_id INTEGER");
-  }
 
   // Seed products if empty
   const count = db.prepare("SELECT COUNT(*) as count FROM products").get().count;
@@ -177,8 +158,8 @@ export const initDb = async () => {
     product_id INTEGER,
     quantity INTEGER,
     price INTEGER,
-    FOREIGN KEY(order_id) REFERENCES orders(id),
-    FOREIGN KEY(product_id) REFERENCES products(id)
+    FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY(product_id) REFERENCES products(id) ON DELETE SET NULL
   )`);
 };
 

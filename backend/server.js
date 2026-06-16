@@ -7,7 +7,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { initDb, query, get, run } from './db.js';
+import db, { initDb, query, get, run } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -74,23 +74,30 @@ app.post('/api/products', authenticateToken, async (req, res) => {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
+  const parsedPrice = parseInt(price);
+  if (isNaN(parsedPrice) || parsedPrice < 0) {
+    return res.status(400).json({ error: 'Некорректная цена' });
+  }
+  const parsedStock = in_stock !== undefined ? parseInt(in_stock) : 0;
+  const stock = isNaN(parsedStock) || parsedStock < 0 ? 0 : parsedStock;
+
   try {
     const result = await run(
       'INSERT INTO products (name, category, price, description, image, seller_id, brand, full_description, specs, in_stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [name, category, price, description, image, req.user.id, brand || null, full_description || null, specs || null, in_stock !== undefined ? parseInt(in_stock) : 0]
+      [name, category, parsedPrice, description, image, req.user.id, brand || null, full_description || null, specs || null, stock]
     );
     res.json({ 
       id: result.id, 
       name, 
       category, 
-      price, 
+      price: parsedPrice, 
       description, 
       image, 
       seller_id: req.user.id,
       brand: brand || null,
       full_description: full_description || null,
       specs: specs || null,
-      in_stock: in_stock !== undefined ? parseInt(in_stock) : 0
+      in_stock: stock
     });
   } catch (err) {
     console.error('Error adding product:', err);
@@ -110,6 +117,13 @@ app.put('/api/products/:id', authenticateToken, async (req, res) => {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
+  const parsedPrice = parseInt(price);
+  if (isNaN(parsedPrice) || parsedPrice < 0) {
+    return res.status(400).json({ error: 'Некорректная цена' });
+  }
+  const parsedStock = in_stock !== undefined ? parseInt(in_stock) : 0;
+  const stock = isNaN(parsedStock) || parsedStock < 0 ? 0 : parsedStock;
+
   try {
     const product = await get('SELECT * FROM products WHERE id = ?', [id]);
     if (!product) {
@@ -122,21 +136,21 @@ app.put('/api/products/:id', authenticateToken, async (req, res) => {
 
     await run(
       'UPDATE products SET name = ?, category = ?, price = ?, description = ?, image = ?, brand = ?, full_description = ?, specs = ?, in_stock = ? WHERE id = ?',
-      [name, category, price, description, image, brand || null, full_description || null, specs || null, in_stock !== undefined ? parseInt(in_stock) : 0, id]
+      [name, category, parsedPrice, description, image, brand || null, full_description || null, specs || null, stock, id]
     );
 
     res.json({ 
       id: parseInt(id), 
       name, 
       category, 
-      price, 
+      price: parsedPrice, 
       description, 
       image, 
       seller_id: req.user.id,
       brand: brand || null,
       full_description: full_description || null,
       specs: specs || null,
-      in_stock: in_stock !== undefined ? parseInt(in_stock) : 0
+      in_stock: stock
     });
   } catch (err) {
     console.error('Error updating product:', err);
@@ -199,7 +213,7 @@ app.post('/api/register', async (req, res) => {
     return res.status(400).json({ error: 'Missing fields' });
   }
 
-  const userRole = role || 'buyer';
+  const userRole = role === 'seller' ? 'seller' : 'buyer';
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -247,26 +261,61 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
   const { items, total, address, phone } = req.body;
   const userId = req.user.id;
 
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'Корзина пуста' });
+  }
+  if (!address || !phone) {
+    return res.status(400).json({ error: 'Не указаны адрес или телефон' });
+  }
+
   try {
-    // Start transaction manually if needed, but for simplicity:
-    const orderResult = await run(
-      'INSERT INTO orders (user_id, address, phone, status, date, total) VALUES (?, ?, ?, ?, ?, ?)',
-      [userId, address, phone, 'Принят', new Date().toISOString(), total]
-    );
-    
-    const orderId = orderResult.id;
+    // Transaction runs synchronously
+    const createOrderTx = db.transaction((orderItems) => {
+      let calculatedTotal = 0;
+      const verifiedItems = [];
 
-    for (const item of items) {
-      await run(
-        'INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
-        [orderId, item.id, item.quantity, item.price]
+      for (const item of orderItems) {
+        const product = db.prepare('SELECT * FROM products WHERE id = ?').get(item.id);
+        if (!product) {
+          throw new Error(`Товар с ID ${item.id} не найден`);
+        }
+
+        if (product.in_stock < item.quantity) {
+          throw new Error(`Недостаточно товара "${product.name}" в наличии (осталось: ${product.in_stock} шт.)`);
+        }
+
+        calculatedTotal += product.price * item.quantity;
+
+        db.prepare('UPDATE products SET in_stock = in_stock - ? WHERE id = ?').run(item.quantity, item.id);
+
+        verifiedItems.push({
+          id: product.id,
+          quantity: item.quantity,
+          price: product.price
+        });
+      }
+
+      const orderInfo = db.prepare(
+        'INSERT INTO orders (user_id, address, phone, status, date, total) VALUES (?, ?, ?, ?, ?, ?)'
+      ).run(userId, address, phone, 'Принят', new Date().toISOString(), calculatedTotal);
+
+      const orderId = orderInfo.lastInsertRowid;
+
+      const insertOrderItem = db.prepare(
+        'INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)'
       );
-    }
+      for (const item of verifiedItems) {
+        insertOrderItem.run(orderId, item.id, item.quantity, item.price);
+      }
 
+      return orderId;
+    });
+
+    const orderId = createOrderTx(items);
     res.json({ id: orderId });
   } catch (err) {
-    console.error('Error creating order:', err);
-    res.status(500).json({ error: err.message });
+    console.error('Error creating order within transaction:', err);
+    res.status(400).json({ error: err.message });
   }
 });
 
@@ -278,9 +327,9 @@ app.get('/api/orders', authenticateToken, async (req, res) => {
     
     for (const order of orders) {
       const items = await query(
-        `SELECT oi.*, p.name 
+        `SELECT oi.*, COALESCE(p.name, 'Удаленный товар') AS name 
          FROM order_items oi 
-         JOIN products p ON oi.product_id = p.id 
+         LEFT JOIN products p ON oi.product_id = p.id 
          WHERE oi.order_id = ?`,
         [order.id]
       );
